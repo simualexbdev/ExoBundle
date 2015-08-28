@@ -59,6 +59,16 @@ class Response
      */
     private $interaction;
 
+    // SIMU
+    /**
+     * Durée permettant de savoir combien de temps l'utilisateur a mis poour répondre à la question. (A IMPLEMENTER)
+     *
+     * @var \DateTime
+     *
+     * @ORM\Column(name="user_response_time", type="time", nullable=true)
+     */
+    private $userResponseTime;
+
     /**
      * Get id
      *
@@ -167,5 +177,31 @@ class Response
     public function setInteraction(\UJM\ExoBundle\Entity\Interaction $interaction)
     {
         $this->interaction = $interaction;
+    }
+
+    // SIMU
+    /**
+     * Set userResponseTime
+     *
+     * @param \DateTime $userResponseTime
+     *
+     * @return Response
+     */
+    public function setUserResponseTime($userResponseTime)
+    {
+        $this->userResponseTime = $userResponseTime;
+
+        return $this;
+    }
+
+    // SIMU
+    /**
+     * Get userResponseTime
+     *
+     * @return \DateTime
+     */
+    public function getUserResponseTime()
+    {
+        return $this->userResponseTime;
     }
 }

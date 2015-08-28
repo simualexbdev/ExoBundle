@@ -12,6 +12,7 @@ use UJM\ExoBundle\Entity\InteractionHole;
 use UJM\ExoBundle\Entity\InteractionMatching;
 use UJM\ExoBundle\Entity\InteractionOpen;
 use UJM\ExoBundle\Entity\InteractionQCM;
+use UJM\ExoBundle\Entity\InteractionTimedQcm; // SIMU
 use UJM\ExoBundle\Entity\Question;
 use UJM\ExoBundle\Entity\Response;
 use UJM\ExoBundle\Entity\Share;
@@ -21,6 +22,7 @@ use UJM\ExoBundle\Form\InteractionHoleType;
 use UJM\ExoBundle\Form\InteractionMatchingType;
 use UJM\ExoBundle\Form\InteractionOpenType;
 use UJM\ExoBundle\Form\InteractionQCMType;
+use UJM\ExoBundle\Form\InteractionTimedQcmType; // SIMU
 use UJM\ExoBundle\Form\QuestionType;
 use UJM\ExoBundle\Form\ResponseType;
 
@@ -292,6 +294,29 @@ class QuestionController extends Controller
 
                     return $this->render('UJMExoBundle:InteractionQCM:paper.html.twig', $vars);
 
+                // SIMU
+                case "InteractionTimedQcm":
+                    $response = new Response();
+                    $interactionTimedQcm = $this->getDoctrine()
+                        ->getManager()
+                        ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                        ->getInteractionTimedQcm($interaction->getId());
+
+                    if ($interactionTimedQcm[0]->getShuffle()) {
+                        $interactionTimedQcm[0]->shuffleChoices();
+                    } else {
+                        $interactionTimedQcm[0]->sortChoices();
+                    }
+
+                    $form   = $this->createForm(new ResponseType(), $response);
+
+                    $vars['interactionToDisplayed'] = $interactionTimedQcm[0];
+                    $vars['remainingTime'] = $interactionTimedQcm[0]->getDuration();
+                    $vars['form']           = $form->createView();
+                    $vars['exoID']          = $exoID;
+
+                    return $this->render('UJMExoBundle:InteractionTimedQcm:paper.html.twig', $vars);
+
                 case "InteractionGraphic":
 
                     $interactionGraph = $this->getDoctrine()
@@ -511,6 +536,44 @@ class QuestionController extends Controller
                     }
 
                     return $this->render('UJMExoBundle:InteractionQCM:edit.html.twig', $variables);
+
+                // SIMU
+                case "InteractionTimedQcm":
+
+                    $interactionTimedQcm = $this->getDoctrine()
+                        ->getManager()
+                        ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                        ->getInteractionTimedQcm($interaction->getId());
+                    //fired a sort function
+                    $interactionTimedQcm[0]->sortChoices();
+
+                    if ($form == null) {
+                        $editForm = $this->createForm(
+                            new InteractionTimedQcmType(
+                                $this->container->get('security.token_storage')
+                                    ->getToken()->getUser(), $catID
+                            ), $interactionTimedQcm[0]
+                        );
+                    } else {
+                        $editForm = $form;
+                    }
+
+                    $typeTimedQcm = $services->getTypeTimedQcm();
+
+                    $variables['entity']         = $interactionTimedQcm[0];
+                    $variables['edit_form']      = $editForm->createView();
+                    $variables['nbResponses']    = $nbResponses;
+                    $variables['linkedCategory'] = $linkedCategory;
+                    $variables['typeTimedQcm']  = json_encode($typeTimedQcm);
+                    $variables['exoID']          = $exoID;
+                    $variables['locker'] = $this->getLockCategory();
+
+                    if ($exoID != -1) {
+                        $exercise = $em->getRepository('UJMExoBundle:Exercise')->find($exoID);
+                        $variables['_resource'] = $exercise;
+                    }
+
+                    return $this->render('UJMExoBundle:InteractionTimedQcm:edit.html.twig', $variables);
 
                 case "InteractionGraphic":
                     $docID = -1;
@@ -905,6 +968,29 @@ class QuestionController extends Controller
                         'entity'   => $entity,
                         'typeMatching' => json_encode($typeMatching),
                         'form'     => $form->createView()
+                        )
+                    );
+                }
+
+                // SIMU
+                //index 1 = TimedQcm Question
+                if ($valType == 6) {
+                    $entity = new InteractionTimedQcm();
+                    $form   = $this->createForm(
+                        new InteractionTimedQcmType(
+                            $this->container->get('security.token_storage')
+                                ->getToken()->getUser()
+                        ), $entity
+                    );
+
+                    $typeTimedQcm = $services->getTypeTimedQcm();
+                    return $this->container->get('templating')->renderResponse(
+                        'UJMExoBundle:InteractionTimedQcm:new.html.twig', array(
+                            'exoID'  => $exoID,
+                            'entity' => $entity,
+                            'form'   => $form->createView(),
+                            'typeTimedQcm' => json_encode($typeTimedQcm)
+
                         )
                     );
                 }

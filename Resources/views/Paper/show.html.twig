@@ -60,6 +60,25 @@
                     {% endif %}
                 </div>
 
+  {# SIMU #}
+  {#--------------------------------------------------- TimedQcm ----------------------------------------------------#}
+
+            {% elseif(interactions[p].type == 'InteractionTimedQcm') %}
+
+                {% set interInfo = getInterTwig(interactions[p].id, 'InteractionTimedQcm') %}
+                {% set inter =  interInfo['question'] %}
+                {{ inter.sortChoices() }}
+
+                <div class="panel-body">
+
+                    {% if (display == 'all') %}
+
+                        {% include "UJMExoBundle:Partial:correction/timedQcm.html.twig" %}
+                        {% include "UJMExoBundle:Partial:correction/interactionScore.html.twig" %}
+
+                    {% endif %}
+                </div>
+
     {#------------------------------------------------- Graphic ------------------------------------------------------#}
 
             {% elseif(interactions[p].type == 'InteractionGraphic') %}
@@ -426,6 +445,11 @@
                                 {% elseif interaction.type == 'InteractionQCM' %}
                                     <option value="{{ loop.index }}" style="color: green;" href="{{ path('ujm_paper_show', { 'id': paperID, 'p': loop.index - 1 }) }}">
                                         {{ 'n_question' | trans }}{{ loop.index }} / {{ interactions | length }}
+                                    </option>
+                                    {# SIMU #}
+                                {% elseif interaction.type == 'InteractionTimedQcm' %}
+                                    <option value="{{ loop.index }}" style="color: brown;" href="{{ path('ujm_paper_show', { 'id': paperID, 'p': loop.index - 1 }) }}">
+                                        {{ 'nQuestion' | trans }}{{ loop.index }} / {{ interactions | length }}
                                     </option>
                                 {% elseif interaction.type == 'InteractionGraphic' %}
                                     <option value="{{ loop.index }}" style="color: black;" href="{{ path('ujm_paper_show', { 'id': paperID, 'p': loop.index - 1 }) }}">

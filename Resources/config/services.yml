@@ -120,3 +120,19 @@ services:
         scope: request
         tags:
             - { name: validator.constraint_validator, alias: ujm.exercise_isvalidqcmmark }
+
+# SIMU
+    ujm.exercise.validator.isvalidtimedQcmglobalmark:
+        class: UJM\ExoBundle\Validator\Constraints\isValidTimedQcmGlobalMarkValidator
+        arguments: [@request]
+        scope: request
+        tags:
+            - { name: validator.constraint_validator, alias: ujm.exercise_isvalidtimedQcmglobalmark }
+
+# SIMU
+    ujm.exercise.validator.isvalidtimedQcmmark:
+        class: UJM\ExoBundle\Validator\Constraints\isValidTimedQcmMarkValidator
+        arguments: [@request]
+        scope: request
+        tags:
+            - { name: validator.constraint_validator, alias: ujm.exercise_isvalidtimedQcmmark }

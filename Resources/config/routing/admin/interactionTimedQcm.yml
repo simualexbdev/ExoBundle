@@ -1,0 +1,17 @@
+# Created by CPA SIMUSANTE
+ujm_interactiontimedQcm_create:
+    pattern:  /create
+    defaults: { _controller: "UJMExoBundle:InteractionTimedQcm:create" }
+    requirements: { _method: post }
+
+ujm_interactiontimedQcm_response:
+    pattern: /testTimedQcm
+    defaults: { _controller: "UJMExoBundle:InteractionTimedQcm:responseTimedQcm" }
+    requirements: { _method: post }
+    options:
+        expose: true
+
+ujm_interactiontimedQcm_update:
+    pattern:  /{id}/update
+    defaults: { _controller: "UJMExoBundle:InteractionTimedQcm:update" }
+    requirements: { _method: post }

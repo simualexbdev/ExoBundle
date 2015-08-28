@@ -194,6 +194,15 @@ info_search_type: Si vous voulez faire une recherche par type, vous devez utilis
 instruction_add_hole : Pour créer un trou, sélectionnez le texte à trouer dans l'éditeur "Texte à trous", puis cliquez sur le bouton "Créer un trou".
 instruction_matching: Pour définir vos correspondances, choisissez dans la colonne "Correspondance" le numéro d'une ou plusieurs propositions à associer.
 in_valid_mark: Note invalide
+# SIMU
+Inter_TimedQcm.html: Complément de cours
+Inter_TimedQcm.limitedTime: Je souhaite qu'il y ait une durée limitée pour répondre à cette question
+Inter_TimedQcm.duration: Temps imparti
+Inter_TimedQcm.remainingTime: Temps restant
+Inter_TimedQcm.legend: Légende
+Inter_TimedQcm.expectedResponseLegendLabel: Réponse attendue
+Inter_TimedQcm.goodUserResponseLegendLabel: Vous avez choisi une bonne réponse
+Inter_TimedQcm.wrongUserResponseLegendLabel: Vous avez choisi une mauvaise réponse
 
 # K
 keep_same_question: Conserver les mêmes questions pour un même utilisateur
@@ -285,6 +294,10 @@ points: Points
 point_answer: Vous devez assigner un point à la réponse attendue
 point_answers: Vous devez assigner un point à chaque réponse
 position: => Positionner le(s) pointeur(s) ci-dessous (croix rouge) sur l'image. La position du centre du pointeur défini votre réponse.
+# SIMU
+timedQcm: QCM Chronométrée
+timedQcm_creation: Création d'une question QCM Chronométrée
+timedQcm_edition: Edition d'une question QCM Chronométrée
 preview: Aperçu
 previous: Précédent
 print_paper: Imprimer la copie
@@ -359,6 +372,8 @@ temporary_mark: Note temporaire
 test_exit: Sortie du test
 title: Titre
 type: Type
+# SIMU
+TypeTimedQcm.value: Type de la question QCM Chronométrée
 type_qcm: Type du QCM
 type_question: Type de la question
 
@@ -392,6 +407,8 @@ InteractionHole: Texte à trous
 InteractionMatching: Association
 InteractionOpen: Ouverte
 InteractionQCM: QCM
+# SIMU
+InteractionTimedQcm: QCM Chronométrée
 Multiple response: Réponse multiples
 oneWord: Un mot
 To drag: Panier

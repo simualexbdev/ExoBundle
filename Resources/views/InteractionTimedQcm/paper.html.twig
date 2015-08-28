@@ -1,0 +1,86 @@
+{# Created by CPA SIMUSANTE #}
+
+{% set layout = "ClarolineCoreBundle:Workspace:layout.html.twig" %}
+
+{% if isDesktop() %}
+    {% set layout = "ClarolineCoreBundle:Desktop:layout.html.twig" %}
+    {# Fil d'Ariane #}
+    {% block breadcrumb %}
+        {{
+            macros.breadcrumbs([
+                {
+                    'icon': 'fa fa-briefcase',
+                    'name': 'desktop'|trans({}, 'platform'),
+                    'href': path('claro_desktop_open')
+                },
+                {
+                    'name': 'bank of questions' | trans,
+                    'href': path('ujm_question_index')
+                },
+                {
+                    'name': 'question' | trans,
+                    'href': ''
+                }
+            ])
+        }}
+    {% endblock %}
+{% else %}
+    {% block resourceBreadcrumb %}
+        <li><a href="{{ path('claro_resource_open', { 'resourceType': _resource.resourceNode.resourceType.name(), 'node': _resource.resourceNode.id }) }}">{{ _resource.getResourceNode().getName() }}</a></li>
+        <li class="active">{{ 'bank of questions' | trans }}</li>
+    {% endblock %}
+{% endif %}
+
+{% extends layout %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('bundles/ujmexo/css/tableLayout.css') }}" type="text/css" rel="stylesheet"/>
+    {# SIMU #}
+   {# <link href="{{ asset('bundles/ujmexo/css/interactionTimedQcm.css') }}" type="text/css" rel="stylesheet"/> #}
+{% endblock %}
+
+{% block title %} {{ 'paper' | trans }} {{ 'question' | trans }} {% endblock %}
+
+{% block section_content %}
+
+    {# Entête ayant pour nom le titre de la question #}
+    <div class="panel-heading">
+        <h3 class="panel-title">{{ interactionToDisplayed.interaction.question.title }}</h3>
+    </div>
+    {# Corps de la question #}
+    <div class="panel-body">
+        {% if exoID == -1 %}
+            {# Affiche le bouton retour qui renvoie vers la banque de questions #}
+            <a class="btn btn-primary" href="{{ path('ujm_question_index') }}">
+                <i class="fa fa-arrow-left"></i> {{ 'back' | trans }}
+            </a>
+        {% else %}
+            {# Affiche le bouton retour qui renvoie vers la liste des questions composants l'exercice #}
+            <a class="btn btn-primary" href="{{ path('ujm_exercise_questions', { 'id': exoID }) }}">
+                <i class="fa fa-arrow-left"></i> {{ 'back' | trans }}
+            </a>
+        {% endif %}
+    </div>
+
+    {% include 'UJMExoBundle:InteractionTimedQcm:questionPaper.html.twig' %}
+
+    {#<script type="text/javascript">#}
+    {#</script>#}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ asset('bundles/ujmexo/js/paper.js') }}"></script>
+    {# SIMU #}
+    {% if interactionToDisplayed.limitedTime %}
+        <script type="text/javascript" src="{{ asset('bundles/ujmexo/js/interactionTimedQcmTimer.js') }}"></script>
+        <script type="text/javascript">
+            {#{{ interactionToDisplayed.choices.toArray() }},#}
+            {# {{ exoID }}, #}
+            $(document).ready(function() {
+                interactionTimedQcmTimer('{{ path('ujm_interactiontimedQcm_response') }}', {{ interactionToDisplayed.id }}, {{ interactionToDisplayed.typeTimedQcm.code }});
+            });
+        </script>
+    {% endif %}
+{% endblock %}

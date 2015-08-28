@@ -101,6 +101,16 @@ class twigExtensions extends \Twig_Extension
                 $inter['maxScore'] = $this->getQCMScoreMax($interQCM[0]);
             break;
 
+            // SIMU
+            case "InteractionTimedQcm":
+                $interTimedQcm = $this->doctrine
+                    ->getManager()
+                    ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                    ->getInteractionTimedQcm($interId);
+                $inter['question'] = $interTimedQcm[0];
+                $inter['maxScore'] = $this->getTimedQcmScoreMax($interTimedQcm[0]);
+                break;
+
             case "InteractionGraphic":
                 $interG = $this->doctrine
                                ->getManager()
@@ -345,6 +355,21 @@ class twigExtensions extends \Twig_Extension
     private function getQCMScoreMax($interQCM)
     {
         return $this->exerciseSer->qcmMaxScore($interQCM);
+    }
+
+    // SIMU
+    /**
+     * Get score max possible for a Timed QCM
+     *
+     * @access public
+     *
+     * @param \UJM\ExoBundle\Entity\Paper\InteractionTimedQcm $interTimedQcm
+     *
+     * Return float
+     */
+    private function getTimedQcmScoreMax($interTimedQcm)
+    {
+        return $this->exerciseSer->timedQcmMaxScore($interTimedQcm);
     }
 
     /**

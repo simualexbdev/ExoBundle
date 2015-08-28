@@ -22,6 +22,11 @@ admin_interaction_qcm:
     resource: "routing/admin/interactionQCM.yml"
     prefix:   /admin/interactionqcm
 
+# SIMU
+admin_interaction_timedQcm:
+    resource: "routing/admin/interactionTimedQcm.yml"
+    prefix:   /admin/interactiontimedQcm
+
 admin_interaction_matching:
     resource: "routing/admin/interactionMatching.yml"
     prefix:   /admin/interactionmatching

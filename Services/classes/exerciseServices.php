@@ -199,6 +199,213 @@ class exerciseServices
         return $score;
     }
 
+    // SIMU
+    /**
+     * To process the user's response for a TimedQcm question and a paper (or a test)
+     *
+     * @access public
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param integer $paperID id Paper or 0 if it's just a question test and not a paper
+     *
+     * Return array
+     */
+    public function responseTimedQcm($request, $paperID = 0)
+    {
+        $res = array();
+        $interactionTimedQcmID = $request->request->get('interactionTimedQcmToValidated');
+        $response = array();
+        $vars = array();
+
+        $em = $this->doctrine->getManager();
+        $interTimedQcm = $em->getRepository('UJMExoBundle:InteractionTimedQcm')->find($interactionTimedQcmID);
+
+        /***** Récupération des choix de l'utilisateur *****/
+        // Pour une question timedQcm à choix unique
+        if ($interTimedQcm->getTypeTimedQcm()->getCode() == 2) {
+            $response[] = json_decode($request->request->get('choice'));
+        }
+        // Pour une question à choix multiple
+        else {
+            if (json_decode($request->request->get('choice')) != null) {
+                $response = json_decode($request->request->get('choice'));
+            }
+            else {
+                $response[0] = -1;
+            }
+        }
+
+        // Récupération de tous les choix possibles à la question
+        $allChoices = $interTimedQcm->getChoices();
+
+        $penalty = 0;
+
+        $session = $request->getSession();
+
+        if ($paperID == 0) {
+
+            if ($session->get('penalties')) {
+                foreach ($session->get('penalties') as $penal) {
+                    $penalty += $penal;
+                }
+            }
+            $session->remove('penalties');
+        } else {
+            $penalty = $this->getPenalty($interTimedQcm->getInteraction(), $paperID);
+        }
+
+        // Récupération du score de l'utilisateur et des bonnes réponses à la question
+        $vars = $this->timedQcmMark($interTimedQcm, $response, $allChoices, $penalty);
+
+        $responseID = '';
+
+        foreach ($response as $res) {
+            if ($res != null) {
+                $responseID .= $res.';';
+            }
+        }
+
+        $res = array(
+            'score'    => $vars['score'],
+            'penalty'  => $penalty,
+            'interTimedQcm' => $interTimedQcm,
+            'response' => $responseID,
+            'rightChoices' => $vars['rightChoices']
+        );
+
+        return $res;
+
+    }
+
+    // SIMU
+    /**
+     * To calculate the score for a TimedQcm question
+     *
+     * @access public
+     *
+     * @param \UJM\ExoBundle\Entity\InteractionTimedQcm $interTimedQcm
+     * @param integer[] $response array of id Choice selected
+     * @param Choice[] $allChoices choices linked at the TimedQcm question
+     * @param float $penality penalty if the user showed hints
+     *
+     * @return string userScore/scoreMax
+     */
+    public function timedQcmMark(\UJM\ExoBundle\Entity\InteractionTimedQcm $interTimedQcm, array $response, $allChoices, $penality)
+    {
+        $score = 0;
+        // Récupération du nombre de points sur lequel la question est notée.
+        $scoreMax = $this->timedQcmMaxScore($interTimedQcm);
+
+        //SIMU
+        $rightChoices = array();
+        $markByChoice = array();
+        $vars = array();
+
+        // Si la question TimedQcm est notée de manière globale (tout bon ou tout faux, pas d'attribution de points par choix), alors...
+        if (!$interTimedQcm->getWeightResponse()) {
+
+            // SIMU
+            // On récupère l'identifiant de tous les choix justes.
+            foreach ($allChoices as $choice) {
+                if ($choice->getRightResponse()) {
+                    $rightChoices[] = $choice->getId();
+                }
+            }
+
+            // On compare les réponses fournies par l'utilisateur avec les bonnes réponses.
+            $result = array_diff($response, $rightChoices);
+            $resultBis = array_diff($rightChoices, $response);
+
+            /* Si l'utilisateur a fourni les bonnes réponses, alors il obtient tous les points attribués à la question
+             * dont on soustrait les éventuelles points de pénalité.
+             */
+            if ((count($result) == 0) && (count($resultBis) == 0)) {
+                $score = $interTimedQcm->getScoreRightResponse() - $penality;
+            }
+            // Sinon, il obtient les points accordés pour une réponse erronée, dont on soustrait les éventuelles points de pénalités.
+            else {
+                $score = $interTimedQcm->getScoreFalseResponse() - $penality;
+            }
+            // Si le score de l'utilisateur est négatif, alors on ramène son score à 0.
+            if ($score < 0) {
+                $score = 0;
+            }
+
+            $score .= ' / '.$scoreMax;
+        // Sinon, si les points sont définis manuellement pour chaque choix alors...
+        } else {
+
+            // Récupération des points par choix
+            foreach ($allChoices as $choice) {
+                $markByChoice[(string) $choice->getId()] = $choice->getWeight();
+
+                // SIMU
+                if ($choice->getRightResponse()) {
+                    $rightChoices[] = $choice->getId();
+                }
+            }
+            // Si l'utilisateur a fourni au moins une réponse, alors on calcule son score en récupérant les points accordés pour chacune de ses réponses
+            if ($response[0] != null && $response[0] != -1) {
+                foreach ($response as $res) {
+                    $score += $markByChoice[$res];
+                }
+            }
+
+            if ($score > $scoreMax) {
+                $score = $scoreMax;
+            }
+
+            $score -= $penality;
+
+            // Si le score de l'utilisateur est négatif, alors on ramène son score à 0.
+            if ($score < 0) {
+                $score = 0;
+            }
+            $score .= '/'.$scoreMax;
+        }
+
+        $vars['rightChoices'] = $rightChoices;
+        $vars['score'] = $score;
+
+        return $vars;
+    }
+
+    // SIMU
+    /**
+     * Get score max possible for a TimedQcm question
+     *
+     * @access public
+     *
+     * @param \UJM\ExoBundle\Entity\Paper\InteractionTimedQcm $interTimedQcm
+     *
+     * @return float
+     */
+    public function timedQcmMaxScore($interTimedQcm)
+    {
+        $scoreMax = 0;
+
+        /* Si la question TimedQcm est notée de manière globale (tout bon ou tout faux, pas d'attribution de points par choix),
+         * alors le score max à la question correspond aux points accordés en cas de bonne réponse.
+         */
+        if (!$interTimedQcm->getWeightResponse()) {
+            $scoreMax = $interTimedQcm->getScoreRightResponse();
+        }
+        /* Sinon, les points sont définis manuellement pour chaque choix, donc on parcourt chaque choix de la question
+         * et pour chaque choix étant une bonne réponse on augmente le score max de la question avec les points qui
+         * sont accordés à ce choix.
+         */
+        else {
+            foreach ($interTimedQcm->getChoices() as $choice) {
+                if ($choice->getRightResponse()) {
+                    $scoreMax += $choice->getWeight();
+                }
+            }
+        }
+
+        // Enfin, on retourne le nombre total de points sur lequel la question est notée.
+        return $scoreMax;
+    }
+
     /**
      * Return the number of papers for an exercise and for an user
      *
@@ -776,6 +983,13 @@ class exerciseServices
                                      ->getInteractionQCM($interaction->getId());
                     $scoreMax = $this->qcmMaxScore($interQCM[0]);
                     break;
+                // SIMU
+                case 'InteractionTimedQcm':
+                    $interTimedQcm = $this->om
+                        ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                        ->getInteractionTimedQcm($interaction->getId());
+                    $scoreMax = $this->timedQcmMaxScore($interTimedQcm[0]);
+                    break;
                 case 'InteractionGraphic':
                     $interGraphic = $this->om
                                          ->getRepository('UJMExoBundle:InteractionGraphic')
@@ -830,12 +1044,21 @@ class exerciseServices
 
         foreach ($interQuestionsTab as $interQuestion) {
             $interaction = $this->om->getRepository('UJMExoBundle:Interaction')->find($interQuestion);
+
             switch ( $interaction->getType()) {
                 case "InteractionQCM":
                     $interQCM = $this->om
                                      ->getRepository('UJMExoBundle:InteractionQCM')
                                      ->getInteractionQCM($interaction->getId());
                     $exercisePaperTotalScore += $this->qcmMaxScore($interQCM[0]);
+                    break;
+
+                // SIMU
+                case "InteractionTimedQcm":
+                    $interTimedQcm = $this->om
+                        ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                        ->getInteractionTimedQcm($interaction->getId());
+                    $exercisePaperTotalScore += $this->timedQcmMaxScore($interTimedQcm[0]);
                     break;
 
                 case "InteractionGraphic":
@@ -1447,6 +1670,29 @@ class exerciseServices
         }
 
         return $typeQCM;
+    }
+
+    // SIMU
+    /**
+     * Get the types of TimedQcm, Multiple response, unique response
+     *
+     * @access public
+     *
+     * @return array
+     */
+    public function getTypeTimedQcm()
+    {
+        $em = $this->doctrine->getManager();
+
+        $typeTimedQcm = array();
+        $types = $em->getRepository('UJMExoBundle:TypeTimedQcm')
+            ->findAll();
+
+        foreach ($types as $type) {
+            $typeTimedQcm[$type->getId()] = $type->getCode();
+        }
+
+        return $typeTimedQcm;
     }
 
     /**

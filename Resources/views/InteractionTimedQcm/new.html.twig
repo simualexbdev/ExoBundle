@@ -1,0 +1,44 @@
+{# Created by CPA SIMUSANTE #}
+
+<link href="{{ asset('bundles/ujmexo/css/tableLayout.css') }}" type="text/css" rel="stylesheet"/>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">{{ 'timedQcm_creation' | trans }}</h3>
+    </div>
+
+    <form onsubmit="return check_form('{{ 'nbr_choices' | trans }}', '{{ 'answer_coched' | trans }}', '{{ 'label_empty' | trans }}', '{{ 'point_answers' | trans }}', '{{ 'point_answer' | trans }}', '{{ 'invite_question' | trans }}');"
+          action="{{ path('ujm_interactiontimedQcm_create') }}" method="post" {{ form_enctype(form) }}>
+
+        <div class="panel-body">
+            {% include "UJMExoBundle:Partial:question.html.twig" %}
+            {% include "UJMExoBundle:Partial:interactions/timedQcm.html.twig" %}
+            {% include "UJMExoBundle:Partial:model.html.twig" %}
+            {% include "UJMExoBundle:Partial:cloneInterCreation.html.twig" %}
+            {% include "UJMExoBundle:Partial:restform.html.twig" %}
+        </div>
+        <div class="panel-footer">
+            <input type="hidden" name="exercise" value="{{ exoID }}" />
+            <button type="submit" id="button_submit" class="btn btn-primary" onclick="setOrder();">{{ 'create' | trans }}</button>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" src="{{ asset('bundles/frontend/jquery/jquery-ui-1.9.2/jquery-ui-1.9.2.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/ujmexo/js/ext/jquery-ui-touch-punch.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/ujmexo/js/interactionTimedQcm.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/ujmexo/js/category_pop.js') }}"></script>
+<script type="text/javascript" src="{{ asset('bundles/ujmexo/js/hint.js') }}"></script>
+
+{# functions javascript #}
+{% if error is defined %}
+    <script type="text/javascript">
+        creationTimedQcmEdit('{{ 'expected_answer' | trans }}', '{{ 'response' | trans }}', '{{ 'points' | trans }}', '{{ 'comment' | trans }}', '{{ 'position_force' | trans }}', '{{ 'add_choice' | trans }}', '{{ 'delete' | trans }}', '{{ typeTimedQcm | raw }}','{{ 'advanced_edition' | trans }}', 0);
+        newHintEdit('{{ 'hint' | trans }}', '{{ 'penalty' | trans }}', '{{ 'hint' | trans }}', '{{ 'delete' | trans }}');
+    </script>
+{% else %}
+    <script type="text/javascript">
+        creationTimedQcm('{{ 'expected_answer' | trans }}', '{{ 'response' | trans }}', '{{ 'points' | trans }}', '{{ 'comment' | trans }}', '{{ 'position_force' | trans }}', '{{ 'add_choice' | trans }}', '{{ 'delete' | trans }}','{{ 'advanced_edition' | trans }}' ,'{{ typeTimedQcm | raw }}');
+        newHint('{{ 'hint' | trans }}', '{{ 'penalty' | trans }}', '{{ 'hint' | trans }}', '{{ 'delete' | trans }}');
+    </script>
+{% endif %}

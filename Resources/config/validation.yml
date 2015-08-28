@@ -6,6 +6,15 @@ UJM\ExoBundle\Entity\InteractionQCM:
         scoreFalseResponse:
             - UJM\ExoBundle\Validator\Constraints\isValidQCMGlobalMark: ~
 
+# SIMU
+UJM\ExoBundle\Entity\InteractionTimedQcm:
+    properties:
+        scoreRightResponse:
+            - UJM\ExoBundle\Validator\Constraints\isValidTimedQcmGlobalMark: ~
+
+        scoreFalseResponse:
+            - UJM\ExoBundle\Validator\Constraints\isValidTimedQcmGlobalMark: ~
+
 UJM\ExoBundle\Entity\Hint:
     properties:
         penalty:
@@ -15,6 +24,14 @@ UJM\ExoBundle\Entity\Choice:
     properties:
         weight:
             - UJM\ExoBundle\Validator\Constraints\isValidQCMMark: ~
+        label:
+             - UJM\ExoBundle\Validator\Constraints\isNotEmpty: ~
+
+# SIMU
+UJM\ExoBundle\Entity\TimedQcmChoice:
+    properties:
+        weight:
+            - UJM\ExoBundle\Validator\Constraints\isValidTimedQcmMark: ~
         label:
              - UJM\ExoBundle\Validator\Constraints\isNotEmpty: ~
 

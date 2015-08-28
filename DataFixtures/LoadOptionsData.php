@@ -26,6 +26,16 @@ class LoadOptionsData extends AbstractFixture
             $this->newTQCM($val, $code);
         }
 
+        // SIMU
+        $valTtimedQcm = array();
+
+        $valTtimedQcm[1] = 'Multiple response';
+        $valTtimedQcm[2] = 'Unique response';
+
+        foreach ($valTtimedQcm as $code => $val) {
+            $this->newTTimedQcm($val, $code);
+        }
+
         $valTopen = array();
         $valTopen[1] = 'numerical';
         $valTopen[2] = 'long';
@@ -54,6 +64,16 @@ class LoadOptionsData extends AbstractFixture
         $tqcm->setCode($code);
 
         $this->manager->persist($tqcm);
+    }
+
+    // SIMU
+    private function newTTimedQcm($val, $code)
+    {
+        $ttimedQcm = new TypeTimedQcm();
+        $ttimedQcm->setValue($val);
+        $ttimedQcm->setCode($code);
+
+        $this->manager->persist($ttimedQcm);
     }
 
     private function newTOPEN($val, $code)

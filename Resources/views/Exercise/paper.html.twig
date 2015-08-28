@@ -78,6 +78,17 @@
                 <input type="hidden" name="testQCM" value="testQCM" />
                 <input type="hidden" name="interaction" value="{{ interactionToDisplayed.id }}"/>
 
+            {# SIMU #}
+            {#-------------------------------------------------- TimedQcm ------------------------------------------------------------#}
+
+            {% elseif interactionType == 'InteractionTimedQcm' %}
+
+                <input class="form-control" type="hidden" name="interactionTimedQcmToValidated" value="{{ interactionToDisplayed.id }}"/>
+                <input class="form-control" type="hidden" name="interactionToValidated" value="{{ interactionToDisplayed.interaction.id }}"/>
+                <input class="form-control" type="hidden" name="typeInteraction" value="InteractionTimedQcm"/>
+
+                {% include 'UJMExoBundle:InteractionTimedQcm:questionPaper.html.twig' %}
+
             {#------------------------------------------------- Graphic ---------------------------------------------------------#}
 
             {% elseif interactionType == 'InteractionGraphic' %}
@@ -423,6 +434,19 @@
             <script type="text/javascript" src="{{ asset('bundles/ujmexo/js/ext/jquery-ui-touch-punch.js') }}"></script>
         {% else %}
             <script type="text/javascript" src="{{ asset('bundles/ujmexo/js/ext/dom.jsPlumb-1.7.2-min.js') }}"></script>
+        {% endif %}
+    {# SIMU #}
+    {% elseif interactionType == 'InteractionTimedQcm' %}
+        {% if interactionToDisplayed.limitedTime %}
+            {#SESSION {% set sess = app.session.get('tabRemainingTime') %}#}
+            {#{{  sess[interactionToDisplayed.id].format('H:i:s') }}#}
+            <script type="text/javascript" src="{{ asset('bundles/ujmexo/js/interactionTimedQcmTimer.js') }}"></script>
+            <script type="text/javascript">
+                $(document).ready(function() {
+
+                    interactionTimedQcmTimer('{{ path('ujm_interactiontimedQcm_response') }}', {{ interactionToDisplayed.id }}, {{ interactionToDisplayed.typeTimedQcm.code }}, {{ paper }}, '');
+                });
+            </script>
         {% endif %}
     {% endif %}
 

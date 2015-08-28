@@ -11,6 +11,9 @@ use Claroline\CoreBundle\Library\Resource\ResourceCollection;
 
 use UJM\ExoBundle\Form\ExerciseType;
 use UJM\ExoBundle\Form\ExerciseHandler;
+// SIMU
+use UJM\ExoBundle\Form\ResponseType;
+
 use UJM\ExoBundle\Entity\Exercise;
 use UJM\ExoBundle\Entity\ExerciseQuestion;
 use UJM\ExoBundle\Entity\Paper;
@@ -762,6 +765,8 @@ class ExerciseController extends Controller
                         $interactions  = $tab['interactions'];
                         $orderInter    = $tab['orderInter'];
                         $tabOrderInter = $tab['tabOrderInter'];
+                        // SIMU
+                        $session->set('tabRemainingTime', $tab['tabRemainingTime']);
                     } else {
                         $lastPaper = $papers[count($papers) - 1];
                         $orderInter = $lastPaper->getOrdreQuestion();
@@ -774,6 +779,8 @@ class ExerciseController extends Controller
                     $interactions  = $tab['interactions'];
                     $orderInter    = $tab['orderInter'];
                     $tabOrderInter = $tab['tabOrderInter'];
+                    // SIMU
+                    $session->set('tabRemainingTime', $tab['tabRemainingTime']);
                 }
 
                 $paper->setOrdreQuestion($orderInter);
@@ -819,6 +826,9 @@ class ExerciseController extends Controller
     {
         $orderInter = '';
         $tabOrderInter = array();
+        // SIMU
+        // Tableau recueillant le temps passé par l'utilisateur sur chaque question
+        $tabRemainingTime = array();
         $tab = array();
 
         $interactions = $this->getDoctrine()
@@ -832,11 +842,24 @@ class ExerciseController extends Controller
         foreach ($interactions as $interaction) {
             $orderInter = $orderInter.$interaction->getId().';';
             $tabOrderInter[] = $interaction->getId();
+
+            // SIMU
+            if ($interaction->getType() == "InteractionTimedQcm") {
+                $interTimedQcm = $this->getDoctrine()
+                                       ->getManager()
+                                       ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                                       ->getInteractionTimedQcm($interaction->getId());
+                if ($interTimedQcm[0]->getLimitedTime()) {
+                    $tabRemainingTime[$interTimedQcm[0]->getId()] = $interTimedQcm[0]->getDuration();
+                }
+            }
         }
 
         $tab['interactions']  = $interactions;
         $tab['orderInter']    = $orderInter;
         $tab['tabOrderInter'] = $tabOrderInter;
+        // SIMU
+        $tab['tabRemainingTime'] = $tabRemainingTime;
 
         return $tab;
     }
@@ -873,13 +896,16 @@ class ExerciseController extends Controller
 
         //To record response
         $exerciseSer = $this->container->get('ujm.exercise_services');
+        // To get user ip address
         $ip = $exerciseSer->getIP($request);
         $interactionToValidatedID = $request->get('interactionToValidated');
+        // Récupération des réponses que l'utilisateur a pu potentiellement choisir précédemment (cas de la sélection de la question ou de l'appui sur le bouton précédent)
         $response = $this->getDoctrine()
             ->getManager()
             ->getRepository('UJMExoBundle:Response')
             ->getAlreadyResponded($session->get('paper'), $interactionToValidatedID);
 
+        // Vérification du type de la question dont les réponses fournies doivent être insérées en base (de manière spécifique suivant le type de la question)
         switch ($typeInterToRecorded) {
             case "InteractionQCM":
                 $res = $exerciseSer->responseQCM($request, $session->get('paper'));
@@ -914,21 +940,27 @@ class ExerciseController extends Controller
             $response->setNbTries($response->getNbTries() + 1);
         }
 
-        $response->setIp($ip);
-        $score = explode('/', $res['score']);
-        $response->setMark($score[0]);
-        $response->setResponse($res['response']);
+        // SIMU
+        if ($typeInterToRecorded != "InteractionTimedQcm") {
+            $response->setIp($ip);
+            $score = explode('/', $res['score']);
+            $response->setMark($score[0]);
+            $response->setResponse($res['response']);
 
-        $em->persist($response);
-        $em->flush();
+            $em->persist($response);
+            $em->flush();
+        }
 
         //To display selectioned question
         $numQuestionToDisplayed = $request->get('numQuestionToDisplayed');
 
+        // Si l'examen est terminé
         if ($numQuestionToDisplayed == 'finish') {
             return $this->finishExercise($session);
+        // Si l'examen est interrompu (appui sur le bouton retour)
         } else if ($numQuestionToDisplayed == 'interupt') {
             return $this->interuptExercise();
+        // Sinon, c'est qu'il reste encore une / des question(s)
         } else {
             $interactionToDisplayedID = $tabOrderInter[$numQuestionToDisplayed - 1];
             $interactionToDisplay = $em->getRepository('UJMExoBundle:Interaction')->find($interactionToDisplayedID);
@@ -1110,7 +1142,6 @@ class ExerciseController extends Controller
 
         switch ($typeInterToDisplayed) {
             case "InteractionQCM":
-
                 $interactionToDisplayed = $this->getDoctrine()
                     ->getManager()
                     ->getRepository('UJMExoBundle:InteractionQCM')
@@ -1132,6 +1163,47 @@ class ExerciseController extends Controller
                 } else {
                     $responseGiven = '';
                 }
+
+                break;
+
+            // SIMU
+            case "InteractionTimedQcm":
+                $response = new Response();
+
+                $interactionToDisplayed = $this->getDoctrine()
+                    ->getManager()
+                    ->getRepository('UJMExoBundle:InteractionTimedQcm')
+                    ->getInteractionTimedQcm($interactionToDisplay->getId());
+
+                if ($interactionToDisplayed[0]->getLimitedTime()) {
+                    $tabRemainingTime = $session->get('tabRemainingTime');
+                    $remainingTime = $tabRemainingTime[$interactionToDisplayed[0]->getId()];
+                    $array['remainingTime'] = $remainingTime;
+                }
+
+                if ($interactionToDisplayed[0]->getShuffle()) {
+                    $interactionToDisplayed[0]->shuffleChoices();
+                } else {
+                    $interactionToDisplayed[0]->sortChoices();
+                }
+
+                // Cas où l'utilisateur a déjà répondu à une ou des questions puis c'est arrêté en cours
+                $responseGiven = $this->getDoctrine()
+                    ->getManager()
+                    ->getRepository('UJMExoBundle:Response')
+                    ->getAlreadyResponded($session->get('paper'), $interactionToDisplay->getId());
+
+                if (count($responseGiven) > 0) {
+                    $responseGiven = $responseGiven[0]->getResponse();
+                } else {
+                    $responseGiven = '';
+                }
+
+                $form   = $this->createForm(new ResponseType(), $response);
+
+                $array['exoID']     = $paper->getExercise()->getId();
+             //   $array['session']     = json_encode($session);
+                $array['form']      = $form->createView();
 
                 break;
 

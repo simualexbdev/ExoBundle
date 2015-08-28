@@ -1,0 +1,118 @@
+{# Created by CPA SIMUSANTE #}
+
+{% block stylesheets %}
+    {# SIMU #}
+    <link href="{{ asset('bundles/ujmexo/css/interactionTimedQcm.css') }}" type="text/css" rel="stylesheet"/>
+{% endblock %}
+{# SIMU #}
+<div class="list-group">
+    <div class="list-group-item">
+
+        {# On inclut la vue affichant le titre de la question, sa description si elle en a une et la question elle-même #}
+        {% include "UJMExoBundle:Partial:interactionPaper.html.twig" %}
+
+
+        {# SIMU #}
+        {% if interactionToDisplayed.limitedTime %}
+            <table border="0">
+                <tr>
+                    <td id="remainingTimeLabel">{{ 'Inter_TimedQcm.remainingTime' | trans }} : </td>
+                    {# interactionToDisplayed.duration.format('H:i:s')  #}
+                    <td id="remainingTime"> {#{{ interactionToDisplayed.duration.format('H:i:s') }}#} {{ remainingTime.format('H:i:s') }}</td>
+                </tr>
+            </table>
+
+            <hr/>
+        {% endif %}
+
+        <form id="responseForm" action="{{ path('ujm_interactiontimedQcm_response') }}" method="post" {{ form_enctype(form) }}>
+            {{ form_widget(form) }}
+
+            {% set alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'] %}
+            {% set index = 0 %}
+            <div id="responseQuestion">
+                {# Affichage du tableau des choix (réponses) possibles pour la question #}
+                <table class="table-striped" id="questionChoices" cellspacing="5" cellpadding="2" border="0">
+                    {% for choice in interactionToDisplayed.choices %}
+                        <tr>
+                            {# Si la question est à réponse unique => radio button #}
+                            {% if interactionToDisplayed.typeTimedQcm.code == 2 %}
+                                <td><p><INPUT type="radio" id="choice_{{ choice.id }}" name="choice" value="{{ choice.id }}"/></p></td>
+                                {# Sinon si la question est à réponse multiple => checkbox button #}
+                            {% else %}
+                                <td><p><INPUT type="checkbox" id="choice_{{ choice.id }}" name="choice[]" value="{{ choice.id }}"/></p></td>
+                            {% endif %}
+                            {# Affiche l'intitulé du choix #}
+                            <td>
+                                <div id="labelChoice_{{ choice.id }}">
+                                    {% if interactionToDisplayed.choices | length < 27 %}
+                                        {{ alphabet[index] }})
+                                        {% set index = index + 1 %}
+                                    {% endif %}
+                                    {{ choice.label | raw }}
+                                </div>
+                            </td>
+                            {# Cell to display check or cross icon according to a right or wrong response respectively #}
+                            <td class="userResultChoice" id="rightChoice_{{ choice.id }}"></td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                {# Result legend #}
+                <div id="userResultLegendBorder">
+                    <table class='table' id ="userResultLegend" cellspacing='5' cellpadding='2'>
+                        <tr id="legendTitleSeparator"><th id="legendTitle" colspan="3">{{ 'Inter_TimedQcm.legend' | trans }}</th></tr>
+                        <tr>
+                            <td id="expectedResponseSymbolCell"><div class="responseLegendSymbol" id="expectedResponseSymbol">&ensp;</div></td>
+                            <td class="legendLabel">:</td>
+                            <td class="legendLabel">
+                                {{ 'Inter_TimedQcm.expectedResponseLegendLabel' | trans }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="responseLegendSymbol" id="userGoodResponse">
+                                <i class='fa fa-check'></i>
+                            </td>
+                            <td class="legendLabel">:</td>
+                            <td class="legendLabel">
+                                {{ 'Inter_TimedQcm.goodUserResponseLegendLabel' | trans }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="responseLegendSymbol" id="userWrongResponse">
+                                <i class='fa fa-times'></i>
+                            </td>
+                            <td class="legendLabel">:</td>
+                            <td class="legendLabel">
+                                {{ 'Inter_TimedQcm.wrongUserResponseLegendLabel' | trans }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                {# End result legend #}
+            </div>
+            {% if interactionToDisplayed.interaction.hints is not empty %}
+                {% set tryInteraction = interactionToDisplayed %}
+                {% include "UJMExoBundle:Partial:hintTryInteraction.html.twig" %}
+            {% endif %}
+
+            <div class="panel-course-complement">
+                <hr/>
+                {{ interactionToDisplayed.htmlCourseComplement | raw }}
+            </div>
+
+            <div class="panel-footer">
+                <input type="hidden" name="testTimedQcm" value="testTimedQcm" />
+                {#<input type="hidden" name="interactionTimedQcmToValidated" value="{{ interactionToDisplayed.id }}" />#}
+                <input type="hidden" name="exoID" value="{{ exoID }}" />
+                {#{% for choice in interactionToDisplayed.choices %}#}
+                    {#{% if (choice.rightResponse) %}#}
+                        {#<input type="hidden" id="response_{{ choice.id }}" value="1" />#}
+                    {#{% else %}#}
+                        {#<input type="hidden" id="response_{{ choice.id }}" value="0" />#}
+                    {#{% endif %}#}
+                {#{% endfor %}#}
+                <button type="button" id="submit_response" class="btn btn-primary">{{ 'validate' | trans }}</button>
+            </div>
+        </form>
+    </div>
+</div>
